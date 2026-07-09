@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "170924865357",
+    "project_id": "surplusthem",
+    "storage_bucket": "surplusthem.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:170924865357:android:fbee63f31e34843e5d2904",
+        "android_client_info": {
+          "package_name": "com.ssenyondo.surplusthem"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3iItXxFN2vSgpksiYLqONK9uY7OALpvE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
