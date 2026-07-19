@@ -42,3 +42,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) setState(() => _isUploadingPhoto = false);
     }
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF2E7D32),
+        title: const Text('Profile'),
+        foregroundColor: Colors.white,
+      ),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream:
+            FirebaseFirestore.instance
+                .collection('users')
+                .doc(user?.uid)
+                .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+          final photoUrl = data['photoUrl'] as String?;
