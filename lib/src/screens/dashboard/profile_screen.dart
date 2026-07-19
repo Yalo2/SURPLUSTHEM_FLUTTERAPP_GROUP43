@@ -153,3 +153,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
+                                MenuTile(
+                  icon: Icons.history,
+                  title: 'My Donations',
+                  subtitle: 'View all your posts',
+                  onTap:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MyDonationsScreen(),
+                        ),
+                      ),
+                ),
+                MenuTile(
+                  icon: Icons.card_giftcard,
+                  title: 'My Claims',
+                  subtitle: 'Items you claimed',
+                  onTap:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (_) =>
+                                  const MyDonationsScreen(), // tabbed screen, opens on Donations tab by default
+                        ),
+                      ),
+                ),
+                MenuTile(
+                  icon: Icons.settings,
+                  title: 'Settings',
+                  subtitle: 'App preferences',
+                  onTap:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SettingsScreen(),
+                        ),
+                      ),
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.logout, color: Colors.red),
+                  title: const Text(
+                    'Logout',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onTap: () async {
+                    await FirebaseAuth.instance.signOut();
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/',
+                      (route) => false,
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
