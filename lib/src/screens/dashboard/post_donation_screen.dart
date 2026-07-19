@@ -59,3 +59,68 @@ class _PostDonationScreenState extends State<PostDonationScreen> {
         'status': 'available',
         'createdAt': FieldValue.serverTimestamp(),
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Donation posted successfully!')),
+      );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        (route) => false,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    } finally {
+      setState(() => _isUploading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF2E7D32),
+        title: const Text('Share Surplus'),
+        foregroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Photo Upload
+            GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                height: 220,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.grey,
+                    style: BorderStyle.solid,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.grey[100],
+                ),
+                child:
+                    _selectedImage != null
+                        ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(_selectedImage!, fit: BoxFit.cover),
+                        )
+                        : const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.camera_alt,
+                              size: 60,
+                              color: Colors.grey,
+                            ),
+                            Text(
+                              'Tap to add photo',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+              ),
+            ),
