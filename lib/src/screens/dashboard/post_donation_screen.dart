@@ -12,3 +12,19 @@ class PostDonationScreen extends StatefulWidget {
   @override
   State<PostDonationScreen> createState() => _PostDonationScreenState();
 }
+class _PostDonationScreenState extends State<PostDonationScreen> {
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  String _selectedCategory = 'Food';
+  File? _selectedImage;
+  bool _isUploading = false;
+
+  final List<String> _categories = ['Food', 'Clothes', 'Household', 'Other'];
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() => _selectedImage = File(pickedFile.path));
+    }
+  }
