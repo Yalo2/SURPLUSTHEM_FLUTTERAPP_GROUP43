@@ -124,3 +124,62 @@ class _PostDonationScreenState extends State<PostDonationScreen> {
                         ),
               ),
             ),
+
+            const SizedBox(height: 24),
+
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                labelText: 'Item Title',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            TextField(
+              controller: _descriptionController,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            DropdownButtonFormField<String>(
+              value: _selectedCategory,
+              decoration: const InputDecoration(
+                labelText: 'Category',
+                border: OutlineInputBorder(),
+              ),
+              items:
+                  _categories
+                      .map(
+                        (cat) => DropdownMenuItem(value: cat, child: Text(cat)),
+                      )
+                      .toList(),
+              onChanged: (value) => setState(() => _selectedCategory = value!),
+            ),
+
+            const SizedBox(height: 32),
+
+            ElevatedButton(
+              onPressed: _isUploading ? null : _postDonation,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2E7D32),
+                padding: const EdgeInsets.symmetric(vertical: 18),
+              ),
+              child:
+                  _isUploading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                        'Post Donation',
+                        style: TextStyle(fontSize: 18),
+                      ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
