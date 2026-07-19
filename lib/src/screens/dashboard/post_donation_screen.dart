@@ -28,3 +28,34 @@ class _PostDonationScreenState extends State<PostDonationScreen> {
       setState(() => _selectedImage = File(pickedFile.path));
     }
   }
+
+  Future<void> _postDonation() async {
+    if (_titleController.text.isEmpty ||
+        _descriptionController.text.isEmpty ||
+        _selectedImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields and add a photo')),
+      );
+      return;
+    }
+
+    setState(() => _isUploading = true);
+
+    try {
+      // Upload image to Firebase Storage
+      String? photoUrl = await uploadToCloudinary(_selectedImage!);
+      if (photoUrl == null) {
+        throw Exception('Image upload failed. Please try again.');
+      }
+
+      // Save to Firestore
+      await FirebaseFirestore.instance.collection('donations').add({
+        'title': _titleController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'category': _selectedCategory,
+        'location': 'Kampala, Uganda', // You can make this dynamic later
+        'photoUrl': photoUrl,
+        'donorId': FirebaseAuth.instance.currentUser!.uid,
+        'status': 'available',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
