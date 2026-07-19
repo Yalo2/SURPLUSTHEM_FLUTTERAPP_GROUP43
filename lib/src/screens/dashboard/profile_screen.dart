@@ -240,3 +240,29 @@ class StatCard extends StatelessWidget {
     );
   }
 }
+
+class MenuTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
+
+  const MenuTile({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.subtitle = '',
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: const Color(0xFF2E7D32)),
+      title: Text(title),
+      subtitle: subtitle.isNotEmpty ? Text(subtitle) : null,
+      trailing: const Icon(Icons.chevron_right),
+      onTap: onTap,
+    );
+  }
+}
