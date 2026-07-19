@@ -116,3 +116,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                       ),
+
+                                            const SizedBox(height: 12),
+                      Text(
+                        data['fullName'] ?? 'User',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        data['phone'] ?? user?.email ?? '',
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      StatCard(
+                        title: 'Donated',
+                        value: (data['totalClaims'] ?? 0).toString(),
+                      ),
+                      StatCard(
+                        title: 'Claims',
+                        value: (data['claimsThisWeek'] ?? 0).toString(),
+                      ),
+                      StatCard(
+                        title: 'Rating',
+                        value: (data['rating'] ?? 0.0).toStringAsFixed(1),
+                      ),
+                    ],
+                  ),
+                ),
