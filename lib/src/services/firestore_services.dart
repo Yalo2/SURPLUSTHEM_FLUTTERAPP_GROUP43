@@ -8,3 +8,13 @@ class FirestoreService {
   // Get current user ID
   String get currentUserId => _auth.currentUser!.uid;
 
+  // Check if user can claim (Weekly limit = 2)
+  Future<bool> canUserClaim() async {
+    final userDoc = await _firestore.collection('users').doc(currentUserId).get();
+
+    if (!userDoc.exists) return false;
+
+    final data = userDoc.data()!;
+    int claimsThisWeek = data['claimsThisWeek'] ?? 0;
+    Timestamp lastReset = data['lastResetDate'] ?? Timestamp.now();
+
