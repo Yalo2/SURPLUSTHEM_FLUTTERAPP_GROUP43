@@ -60,3 +60,37 @@ class DonationClaimsScreen extends StatelessWidget {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
                             ),
+                            child: const Text('Approve'),
+                          ),
+                          ElevatedButton(
+                            onPressed:
+                                () => _updateClaimStatus(
+                                  claims[index].id,
+                                  'rejected',
+                                ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
+                            child: const Text('Reject'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _updateClaimStatus(String claimId, String status) async {
+    await FirebaseFirestore.instance.collection('claims').doc(claimId).update({
+      'status': status,
+      'reviewedAt': Timestamp.now(),
+    });
+  }
+}
+
