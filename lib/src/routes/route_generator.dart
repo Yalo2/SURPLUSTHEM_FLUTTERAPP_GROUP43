@@ -15,3 +15,10 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => const LoginScreen());
       case AppRoutes.register:
         return MaterialPageRoute(builder: (_) => const RegisterScreen());
+      case AppRoutes.mainNavigation:
+        return MaterialPageRoute(builder: (_) => const MainNavigation());
+      case AppRoutes.itemDetail:
+        final args = settings.arguments as String?;
+        return MaterialPageRoute(
+          builder: (_) => ItemDetailScreen(itemId: args ?? ''),
+        );
