@@ -30,3 +30,22 @@ class FirestoreService {
     return claimsThisWeek < 2;
   }
 
+  // Reset claims every week
+  Future<void> _resetClaimsCounter() async {
+    await _firestore.collection('users').doc(currentUserId).update({
+      'claimsThisWeek': 0,
+      'lastResetDate': Timestamp.now(),
+    });
+  }
+
+  // Record a claim
+  Future<void> recordClaim(String donationId, String needReason) async {
+    // Create claim document
+    await _firestore.collection('claims').add({
+      'donationId': donationId,
+      'recipientId': currentUserId,
+      'needReason': needReason,
+      'status': 'pending',
+      'requestedAt': Timestamp.now(),
+    });
+
