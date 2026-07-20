@@ -18,3 +18,15 @@ class FirestoreService {
     int claimsThisWeek = data['claimsThisWeek'] ?? 0;
     Timestamp lastReset = data['lastResetDate'] ?? Timestamp.now();
 
+    // Reset counter if new week
+    final now = Timestamp.now();
+    final daysSinceReset = now.toDate().difference(lastReset.toDate()).inDays;
+
+    if (daysSinceReset >= 7) {
+      await _resetClaimsCounter();
+      return true;
+    }
+
+    return claimsThisWeek < 2;
+  }
+
