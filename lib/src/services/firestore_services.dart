@@ -49,3 +49,9 @@ class FirestoreService {
       'requestedAt': Timestamp.now(),
     });
 
+    // Increment user's weekly claim count
+    await _firestore.collection('users').doc(currentUserId).update({
+      'claimsThisWeek': FieldValue.increment(1),
+    });
+  }
+}
