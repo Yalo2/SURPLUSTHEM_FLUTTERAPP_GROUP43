@@ -19,4 +19,7 @@ Future<String?> uploadToCloudinary(File imageFile) async {
     final responseBody = await response.stream.bytesToString();
     final data = jsonDecode(responseBody);
     return data['secure_url'];
+  }
+  return null;
+}
 
