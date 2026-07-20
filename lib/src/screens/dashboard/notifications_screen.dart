@@ -6,8 +6,7 @@ class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
   @override
-
-    Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
     final userId = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
@@ -24,34 +23,47 @@ class NotificationsScreen extends StatelessWidget {
                 .orderBy('createdAt', descending: true)
                 .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final notifications = snapshot.data!.docs;
-
-          if (notifications.isEmpty) {
-            return const Center(child: Text('No notifications yet'));
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.notifications_off, size: 60, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text('No notifications yet', style: TextStyle(fontSize: 18)),
+                  Text(
+                    'You will see updates here',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
           }
+
+          final notifications = snapshot.data!.docs;
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: notifications.length,
             itemBuilder: (context, index) {
               final data = notifications[index].data() as Map<String, dynamic>;
+              final isRead = data['isRead'] ?? false;
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(
-                  leading: const Icon(
+                  leading: Icon(
                     Icons.notifications,
-                    color: Color(0xFF2E7D32),
+                    color: isRead ? Colors.grey : const Color(0xFF2E7D32),
                   ),
                   title: Text(data['title'] ?? 'Notification'),
                   subtitle: Text(data['body'] ?? ''),
                   trailing: Text(
-                    data['createdAt'] != null
-                        ? '${DateTime.now().difference((data['createdAt'] as Timestamp).toDate()).inHours}h ago'
-                        : '',
+                    _timeAgo(data['createdAt']),
                     style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ),
@@ -61,5 +73,13 @@ class NotificationsScreen extends StatelessWidget {
         },
       ),
     );
+  }
+
+  String _timeAgo(Timestamp? timestamp) {
+    if (timestamp == null) return '';
+    final difference = DateTime.now().difference(timestamp.toDate());
+    if (difference.inDays > 0) return '${difference.inDays}d ago';
+    if (difference.inHours > 0) return '${difference.inHours}h ago';
+    return '${difference.inMinutes}m ago';
   }
 }
