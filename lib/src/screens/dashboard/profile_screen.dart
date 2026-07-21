@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/custom_widgets.dart';
+import '../../services/cloudinary_service.dart';
 import 'my_donations_screen.dart';
 import 'settings_screen.dart';
-import '../../services/cloudinary_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -19,7 +21,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _changeProfilePhoto() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
     if (pickedFile == null) return;
 
     setState(() => _isUploadingPhoto = true);
@@ -32,11 +37,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'photoUrl': photoUrl,
       }, SetOptions(merge: true));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile picture updated successfully!'),
+            backgroundColor: AppColors.primary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to update photo: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update photo: $e'),
+            backgroundColor: AppColors.accentRose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isUploadingPhoto = false);
@@ -46,19 +65,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2E7D32),
-        title: const Text('Profile'),
-        foregroundColor: Colors.white,
+        title: const Text('My Profile'),
       ),
       body: StreamBuilder<DocumentSnapshot>(
-        stream:
-            FirebaseFirestore.instance
-                .collection('users')
-                .doc(user?.uid)
-                .snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user?.uid)
+            .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -66,146 +83,213 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
           final photoUrl = data['photoUrl'] as String?;
+          final fullName = data['fullName'] ?? 'Community Member';
+          final phone = data['phone'] ?? user?.email ?? '';
+          final totalClaims = (data['totalClaims'] ?? 0).toString();
+          final claimsThisWeek = (data['claimsThisWeek'] ?? 0).toString();
+          final rating = ((data['rating'] ?? 5.0) as num).toStringAsFixed(1);
 
-                    return SingleChildScrollView(
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
             child: Column(
               children: [
-                Container(
+                // Profile Avatar & Header Card
+                PremiumCard(
                   padding: const EdgeInsets.all(24),
-                  color: const Color(0xFF2E7D32),
                   child: Column(
                     children: [
                       GestureDetector(
                         onTap: _isUploadingPhoto ? null : _changeProfilePhoto,
                         child: Stack(
                           children: [
-                            CircleAvatar(
-                              radius: 50,
-                              backgroundColor: Colors.white,
-                              backgroundImage:
-                                  photoUrl != null
-                                      ? NetworkImage(photoUrl)
-                                      : null,
-                              child:
-                                  _isUploadingPhoto
-                                      ? const CircularProgressIndicator()
-                                      : (photoUrl == null
-                                          ? const Icon(
-                                            Icons.person,
-                                            size: 60,
-                                            color: Color(0xFF2E7D32),
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.primary,
+                                  width: 2,
+                                ),
+                              ),
+                              child: CircleAvatar(
+                                radius: 46,
+                                backgroundColor: isDark
+                                    ? AppColors.darkSurfaceSubtle
+                                    : AppColors.lightSurfaceSubtle,
+                                backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                                    ? NetworkImage(photoUrl)
+                                    : null,
+                                child: _isUploadingPhoto
+                                    ? const CircularProgressIndicator()
+                                    : (photoUrl == null || photoUrl.isEmpty
+                                        ? const Icon(
+                                            Icons.person_rounded,
+                                            size: 52,
+                                            color: AppColors.primary,
                                           )
-                                          : null),
+                                        : null),
+                              ),
                             ),
                             Positioned(
-                              bottom: 0,
-                              right: 0,
+                              bottom: 2,
+                              right: 2,
                               child: Container(
-                                padding: const EdgeInsets.all(4),
+                                padding: const EdgeInsets.all(6),
                                 decoration: const BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppColors.primary,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
-                                  Icons.camera_alt,
-                                  size: 18,
-                                  color: Color(0xFF2E7D32),
+                                  Icons.camera_alt_rounded,
+                                  size: 16,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-
-                                            const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       Text(
-                        data['fullName'] ?? 'User',
+                        fullName,
                         style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
                         ),
                       ),
+                      const SizedBox(height: 4),
                       Text(
-                        data['phone'] ?? user?.email ?? '',
-                        style: const TextStyle(color: Colors.white70),
+                        phone,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      StatCard(
+
+                const SizedBox(height: 20),
+
+                // Stats Grid Summary
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatCard(
                         title: 'Donated',
-                        value: (data['totalClaims'] ?? 0).toString(),
+                        value: totalClaims,
+                        icon: Icons.volunteer_activism_rounded,
+                        color: AppColors.primary,
                       ),
-                      StatCard(
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _StatCard(
                         title: 'Claims',
-                        value: (data['claimsThisWeek'] ?? 0).toString(),
+                        value: claimsThisWeek,
+                        icon: Icons.inventory_2_rounded,
+                        color: AppColors.accentIndigo,
                       ),
-                      StatCard(
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _StatCard(
                         title: 'Rating',
-                        value: (data['rating'] ?? 0.0).toStringAsFixed(1),
+                        value: rating,
+                        icon: Icons.star_rounded,
+                        color: AppColors.accentAmber,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Menu Group Card
+                PremiumCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      _MenuTile(
+                        icon: Icons.history_rounded,
+                        title: 'My Donations',
+                        subtitle: 'Manage items you posted',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const MyDonationsScreen(),
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 1, indent: 56),
+                      _MenuTile(
+                        icon: Icons.card_giftcard_rounded,
+                        title: 'My Claims',
+                        subtitle: 'Track your requested items',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const MyDonationsScreen(),
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 1, indent: 56),
+                      _MenuTile(
+                        icon: Icons.settings_outlined,
+                        title: 'Settings & Preferences',
+                        subtitle: 'Theme & account settings',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SettingsScreen(),
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                                MenuTile(
-                  icon: Icons.history,
-                  title: 'My Donations',
-                  subtitle: 'View all your posts',
-                  onTap:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const MyDonationsScreen(),
-                        ),
-                      ),
-                ),
-                MenuTile(
-                  icon: Icons.card_giftcard,
-                  title: 'My Claims',
-                  subtitle: 'Items you claimed',
-                  onTap:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (_) =>
-                                  const MyDonationsScreen(), // tabbed screen, opens on Donations tab by default
-                        ),
-                      ),
-                ),
-                MenuTile(
-                  icon: Icons.settings,
-                  title: 'Settings',
-                  subtitle: 'App preferences',
-                  onTap:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SettingsScreen(),
-                        ),
-                      ),
-                ),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.red),
-                  title: const Text(
-                    'Logout',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                  onTap: () async {
+
+                const SizedBox(height: 24),
+
+                // Logout Button
+                OutlinedButton(
+                  onPressed: () async {
                     await FirebaseAuth.instance.signOut();
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/',
-                      (route) => false,
-                    );
+                    if (context.mounted) {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/',
+                        (route) => false,
+                      );
+                    }
                   },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.accentRose,
+                    side: const BorderSide(color: AppColors.accentRose),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    minimumSize: const Size(double.infinity, 52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.logout_rounded, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Log Out',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -216,52 +300,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-class StatCard extends StatelessWidget {
+class _StatCard extends StatelessWidget {
   final String title;
   final String value;
+  final IconData icon;
+  final Color color;
 
-  const StatCard({super.key, required this.title, required this.value});
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+    return PremiumCard(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
             ),
-            Text(title, style: const TextStyle(color: Colors.grey)),
-          ],
-        ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.lightTextMuted,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class MenuTile extends StatelessWidget {
+class _MenuTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
-  const MenuTile({
-    super.key,
+  const _MenuTile({
     required this.icon,
     required this.title,
-    this.subtitle = '',
-    this.onTap,
+    required this.subtitle,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFF2E7D32)),
-      title: Text(title),
-      subtitle: subtitle.isNotEmpty ? Text(subtitle) : null,
-      trailing: const Icon(Icons.chevron_right),
+      leading: Icon(icon, color: AppColors.primary),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(fontSize: 12, color: AppColors.lightTextMuted),
+      ),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        color: AppColors.lightTextMuted,
+      ),
       onTap: onTap,
     );
   }
