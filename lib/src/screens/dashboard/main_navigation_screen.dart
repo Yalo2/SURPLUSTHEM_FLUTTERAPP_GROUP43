@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-
 import 'home_screen.dart';
 import 'post_donation_screen.dart';
 import 'my_donations_screen.dart';
 import 'profile_screen.dart';
-import 'notifications_screen.dart'; // ← Added
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -19,7 +17,6 @@ class _MainNavigationState extends State<MainNavigation> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const PostDonationScreen(),
-    const NotificationsScreen(), // ← Added
     const MyDonationsScreen(),
     const ProfileScreen(),
   ];
@@ -33,25 +30,14 @@ class _MainNavigationState extends State<MainNavigation> {
         onTap: (index) => setState(() => _currentIndex = index),
         selectedItemColor: const Color(0xFF2E7D32),
         unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed, // Good for 5 tabs
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle),
-            label: 'Donate',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            label: 'My Items',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.add_circle), label: 'Donate'),
+          BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'My Items'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );
   }
 }
-
