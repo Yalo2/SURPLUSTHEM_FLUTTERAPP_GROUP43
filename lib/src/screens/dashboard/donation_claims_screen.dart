@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../widgets/rating_dialog.dart';
 
 class DonationClaimsScreen extends StatelessWidget {
   final String donationId;
@@ -21,53 +22,48 @@ class DonationClaimsScreen extends StatelessWidget {
                 .where('status', isEqualTo: 'pending')
                 .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData)
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
+          }
 
-          final claims = snapshot.data!.docs;
-
-          if (claims.isEmpty) {
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(child: Text('No pending claims'));
           }
 
+          final claims = snapshot.data!.docs;
 
           return ListView.builder(
+            padding: const EdgeInsets.all(12),
             itemCount: claims.length,
             itemBuilder: (context, index) {
               final claim = claims[index].data() as Map<String, dynamic>;
               return Card(
-                margin: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 12),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Need Reason:',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      Text(claim['needReason'] ?? ''),
+                      const SizedBox(height: 8),
+                      Text(claim['needReason'] ?? 'No reason provided'),
                       const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           ElevatedButton(
                             onPressed:
-                                () => _updateClaimStatus(
-                                  claims[index].id,
-                                  'approved',
-                                ),
+                                () => _approveClaim(claims[index].id, context),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
                             ),
                             child: const Text('Approve'),
                           ),
                           ElevatedButton(
-                            onPressed:
-                                () => _updateClaimStatus(
-                                  claims[index].id,
-                                  'rejected',
-                                ),
+                            onPressed: () => _rejectClaim(claims[index].id),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red,
                             ),
@@ -86,11 +82,23 @@ class DonationClaimsScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _updateClaimStatus(String claimId, String status) async {
+  Future<void> _approveClaim(String claimId, BuildContext context) async {
     await FirebaseFirestore.instance.collection('claims').doc(claimId).update({
-      'status': status,
-      'reviewedAt': Timestamp.now(),
+      'status': 'approved',
+      'approvedAt': Timestamp.now(),
+    });
+
+    // Show rating dialog
+    showDialog(
+      context: context,
+      builder: (_) => RatingDialog(claimId: claimId),
+    );
+  }
+
+  Future<void> _rejectClaim(String claimId) async {
+    await FirebaseFirestore.instance.collection('claims').doc(claimId).update({
+      'status': 'rejected',
+      'rejectedAt': Timestamp.now(),
     });
   }
 }
-
