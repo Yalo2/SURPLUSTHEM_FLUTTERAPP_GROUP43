@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'item_detail_screen.dart';
-import 'post_donation_screen.dart';
-import 'my_donations_screen.dart';
-import 'profile_screen.dart';
+import 'notifications_screen.dart';
+import 'notifications_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -15,12 +21,19 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: const Color(0xFF2E7D32),
         title: const Text('SurplusThem'),
         actions: [
-          IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+              );
+            },
+          ),
         ],
       ),
       body: Column(
         children: [
-          // Search Bar
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
@@ -33,10 +46,11 @@ class HomeScreen extends StatelessWidget {
                 filled: true,
                 fillColor: Colors.grey[100],
               ),
+              onChanged: (value) {
+                setState(() => _searchQuery = value);
+              },
             ),
           ),
-
-          // Donations List (your existing code)
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream:
@@ -59,7 +73,19 @@ class HomeScreen extends StatelessWidget {
                   );
                 }
 
-                final donations = snapshot.data!.docs;
+                final donations =
+                    snapshot.data!.docs.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final title =
+                          (data['title'] ?? '').toString().toLowerCase();
+                      return title.contains(_searchQuery.toLowerCase());
+                    }).toList();
+
+                if (donations.isEmpty) {
+                  return const Center(
+                    child: Text('No matching donations found'),
+                  );
+                }
 
                 return ListView.builder(
                   padding: const EdgeInsets.all(16),
@@ -115,9 +141,6 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-
-      // Bottom Navigation Bar added here
     );
   }
 }
-
