@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_widgets.dart';
 import 'item_detail_screen.dart';
@@ -16,8 +17,42 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _searchQuery = '';
   String _selectedCategory = 'All';
+  double? _userLat;
+  double? _userLng;
 
   final List<String> _categories = ['All', 'Food', 'Clothes', 'Household', 'Other'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserLocation();
+  }
+
+  Future<void> _loadUserLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+      if (permission == LocationPermission.deniedForever) return;
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+      );
+      if (mounted) {
+        setState(() {
+          _userLat = position.latitude;
+          _userLng = position.longitude;
+        });
+      }
+    } catch (e) {
+      // Silently fail — donations just won't be sorted by distance
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,13 +65,11 @@ class _HomeScreenState extends State<HomeScreen> {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // Top App Bar & Header
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
               sliver: SliverToBoxAdapter(
                 child: Row(
                   children: [
-                    // Brand Badge / Avatar
                     Container(
                       width: 44,
                       height: 44,
@@ -66,7 +99,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           Text(
-                            'Find & Share Local Surplus',
+                            _userLat != null
+                                ? 'Sorted by distance from you'
+                                : 'Find & Share Local Surplus',
                             style: TextStyle(
                               fontSize: 12,
                               color: isDark
@@ -77,7 +112,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
-                    // Live Claim Quota Indicator
                     if (currentUser != null)
                       StreamBuilder<DocumentSnapshot>(
                         stream: FirebaseFirestore.instance
@@ -94,7 +128,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                       ),
                     const SizedBox(width: 8),
-                    // Notification Button
                     IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(8),
@@ -122,8 +155,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
-            // Search Input Field
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               sliver: SliverToBoxAdapter(
@@ -142,8 +173,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
-            // Category Horizontal Filters
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 54,
@@ -182,10 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-            // Donations Real-time Stream
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('donations')
@@ -220,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
 
-                final filteredDocs = snapshot.data!.docs.where((doc) {
+                var filteredDocs = snapshot.data!.docs.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
                   final title = (data['title'] ?? '').toString().toLowerCase();
                   final category = (data['category'] ?? 'Other').toString();
@@ -232,6 +258,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   return matchesQuery && matchesCat;
                 }).toList();
+
+                if (_userLat != null && _userLng != null) {
+                  filteredDocs.sort((a, b) {
+                    final dataA = a.data() as Map<String, dynamic>;
+                    final dataB = b.data() as Map<String, dynamic>;
+                    final latA = (dataA['latitude'] as num?)?.toDouble();
+                    final lngA = (dataA['longitude'] as num?)?.toDouble();
+                    final latB = (dataB['latitude'] as num?)?.toDouble();
+                    final lngB = (dataB['longitude'] as num?)?.toDouble();
+
+                    if (latA == null || lngA == null) return 1;
+                    if (latB == null || lngB == null) return -1;
+
+                    final distA = Geolocator.distanceBetween(
+                      _userLat!, _userLng!, latA, lngA,
+                    );
+                    final distB = Geolocator.distanceBetween(
+                      _userLat!, _userLng!, latB, lngB,
+                    );
+                    return distA.compareTo(distB);
+                  });
+                }
 
                 if (filteredDocs.isEmpty) {
                   return const SliverFillRemaining(
@@ -254,9 +302,27 @@ class _HomeScreenState extends State<HomeScreen> {
                             filteredDocs[index].data() as Map<String, dynamic>;
                         final donationId = filteredDocs[index].id;
 
+                        double? distanceKm;
+                        final lat = (data['latitude'] as num?)?.toDouble();
+                        final lng = (data['longitude'] as num?)?.toDouble();
+                        if (_userLat != null &&
+                            _userLng != null &&
+                            lat != null &&
+                            lng != null) {
+                          distanceKm = Geolocator.distanceBetween(
+                                _userLat!, _userLng!, lat, lng,
+                              ) /
+                              1000;
+                        }
+
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildDonationCard(context, donationId, data),
+                          child: _buildDonationCard(
+                            context,
+                            donationId,
+                            data,
+                            distanceKm,
+                          ),
                         );
                       },
                       childCount: filteredDocs.length,
@@ -275,6 +341,7 @@ class _HomeScreenState extends State<HomeScreen> {
     BuildContext context,
     String donationId,
     Map<String, dynamic> data,
+    double? distanceKm,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final photoUrl = data['photoUrl'] as String?;
@@ -296,7 +363,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image Header with Badge Overlay
           Stack(
             children: [
               ClipRRect(
@@ -321,7 +387,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       : const Icon(Icons.image_outlined, size: 48, color: Colors.grey),
                 ),
               ),
-              // Category Pill Overlay
               Positioned(
                 top: 12,
                 left: 12,
@@ -339,7 +404,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              // Status Pill
               const Positioned(
                 top: 12,
                 right: 12,
@@ -347,8 +411,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-
-          // Content Details
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -390,7 +452,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      location,
+                      distanceKm != null
+                          ? '${distanceKm.toStringAsFixed(1)} km away'
+                          : location,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
