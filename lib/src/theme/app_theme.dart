@@ -34,21 +34,21 @@ class AppColors {
 
   // Shadows
   static List<BoxShadow> get softShadow => [
-        const BoxShadow(
-          color: Color(0x0A0F172A),
-          blurRadius: 16,
-          offset: Offset(0, 4),
-          spreadRadius: 0,
-        ),
-      ];
+    const BoxShadow(
+      color: Color(0x0A0F172A),
+      blurRadius: 16,
+      offset: Offset(0, 4),
+      spreadRadius: 0,
+    ),
+  ];
 
   static List<BoxShadow> get glowShadow => [
-        BoxShadow(
-          color: primary.withValues(alpha: 0.25),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
-        ),
-      ];
+    BoxShadow(
+      color: primary.withValues(alpha: 0.25),
+      blurRadius: 20,
+      offset: const Offset(0, 8),
+    ),
+  ];
 }
 
 class AppTheme {
@@ -76,15 +76,17 @@ class AppTheme {
       ),
       iconTheme: IconThemeData(color: AppColors.lightTextPrimary),
     ),
-    cardTheme: CardTheme(
-      color: AppColors.lightSurface,
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppColors.lightBorder, width: 1),
-      ),
-    ),
+    cardTheme:
+        CardThemeData +
+        26(
+          color: AppColors.lightSurface,
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: AppColors.lightBorder, width: 1),
+          ),
+        ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
@@ -104,7 +106,10 @@ class AppTheme {
       fillColor: AppColors.lightSurfaceSubtle,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       hintStyle: const TextStyle(color: AppColors.lightTextMuted, fontSize: 15),
-      labelStyle: const TextStyle(color: AppColors.lightTextSecondary, fontSize: 15),
+      labelStyle: const TextStyle(
+        color: AppColors.lightTextSecondary,
+        fontSize: 15,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: AppColors.lightBorder),
@@ -125,7 +130,11 @@ class AppTheme {
       secondarySelectedColor: AppColors.primary,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-      secondaryLabelStyle: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+      secondaryLabelStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
       brightness: Brightness.light,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
@@ -155,7 +164,7 @@ class AppTheme {
       ),
       iconTheme: IconThemeData(color: AppColors.darkTextPrimary),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: AppColors.darkSurface,
       elevation: 0,
       margin: EdgeInsets.zero,
@@ -183,7 +192,10 @@ class AppTheme {
       fillColor: AppColors.darkSurfaceSubtle,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       hintStyle: const TextStyle(color: AppColors.darkTextMuted, fontSize: 15),
-      labelStyle: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 15),
+      labelStyle: const TextStyle(
+        color: AppColors.darkTextSecondary,
+        fontSize: 15,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: AppColors.darkBorder),
@@ -203,8 +215,16 @@ class AppTheme {
       selectedColor: AppColors.primary,
       secondarySelectedColor: AppColors.primary,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.darkTextPrimary),
-      secondaryLabelStyle: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+      labelStyle: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: AppColors.darkTextPrimary,
+      ),
+      secondaryLabelStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
       brightness: Brightness.dark,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
