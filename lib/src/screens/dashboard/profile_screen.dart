@@ -20,11 +20,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isUploadingPhoto = false;
 
   Future<void> _changeProfilePhoto() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
     );
+
+    if (source == null) return;
+
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source, imageQuality: 85);
     if (pickedFile == null) return;
 
     setState(() => _isUploadingPhoto = true);
@@ -94,7 +116,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
             child: Column(
               children: [
-                // Profile Avatar & Header Card
                 PremiumCard(
                   padding: const EdgeInsets.all(24),
                   child: Column(
@@ -175,7 +196,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 20),
 
-                // Stats Grid Summary
                 Row(
                   children: [
                     Expanded(
@@ -209,7 +229,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 24),
 
-                // Menu Group Card
                 PremiumCard(
                   padding: EdgeInsets.zero,
                   child: Column(
@@ -255,7 +274,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 24),
 
-                // Logout Button
                 OutlinedButton(
                   onPressed: () async {
                     await FirebaseAuth.instance.signOut();
