@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_widgets.dart';
 import '../../services/cloudinary_service.dart';
@@ -33,13 +34,55 @@ class _PostDonationScreenState extends State<PostDonationScreen> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
     );
+
+    if (source == null) return;
+
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source, imageQuality: 85);
     if (pickedFile != null) {
       setState(() => _selectedImage = File(pickedFile.path));
+    }
+  }
+
+  Future<Position?> _getCurrentLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return null;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return null;
+      }
+      if (permission == LocationPermission.deniedForever) return null;
+
+      return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+      );
+    } catch (e) {
+      return null;
     }
   }
 
@@ -65,11 +108,15 @@ class _PostDonationScreenState extends State<PostDonationScreen> {
         throw Exception('Image upload failed. Please try again.');
       }
 
+      final position = await _getCurrentLocation();
+
       await FirebaseFirestore.instance.collection('donations').add({
         'title': title,
         'description': description,
         'category': _selectedCategory,
         'location': 'Kampala, Uganda',
+        'latitude': position?.latitude,
+        'longitude': position?.longitude,
         'photoUrl': photoUrl,
         'donorId': FirebaseAuth.instance.currentUser!.uid,
         'status': 'available',
@@ -138,7 +185,6 @@ class _PostDonationScreenState extends State<PostDonationScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Photo Upload Container
             GestureDetector(
               onTap: _pickImage,
               child: Container(
@@ -153,72 +199,72 @@ class _PostDonationScreenState extends State<PostDonationScreen> {
                   ),
                 ),
                 child: _selectedImage != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(18),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Image.file(_selectedImage!, fit: BoxFit.cover),
-                              Positioned(
-                                top: 12,
-                                right: 12,
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.black54,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.edit_rounded,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: Stack(
+                          fit: StackFit.expand,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.add_a_photo_rounded,
-                                size: 32,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Tap to upload item photo',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'High quality photos get claimed faster',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark
-                                    ? AppColors.darkTextMuted
-                                    : AppColors.lightTextMuted,
+                            Image.file(_selectedImage!, fit: BoxFit.cover),
+                            Positioned(
+                              top: 12,
+                              right: 12,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.edit_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                ),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.add_a_photo_rounded,
+                              size: 32,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Tap to add item photo',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Camera or gallery — high quality photos get claimed faster',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? AppColors.darkTextMuted
+                                  : AppColors.lightTextMuted,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
+            ),
 
             const SizedBox(height: 28),
 
-            // Form Inputs Card
             PremiumCard(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -285,7 +331,6 @@ class _PostDonationScreenState extends State<PostDonationScreen> {
 
             const SizedBox(height: 28),
 
-            // Submit Button
             GradientButton(
               text: 'Publish Donation',
               icon: Icons.cloud_upload_rounded,
