@@ -1,47 +1,41 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Flutter/Dart
 .dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
+.idea/
 .pub-cache/
 .pub/
-/build/
+build/
+*.iml
+.flutter-plugins-dependencies
+.flutter-plugins
 
-# Symbolication related
-app.*.symbols
+# Android
+android/.gradle/
+android/.idea/
+android/local.properties
+android/*.iml
+android/*.log
+android/hs_err_pid*.log
 
-# Obfuscation related
-app.*.map.json
+# iOS/macOS
+*.xcworkspace/
+*.xcodeproj/
+Pods/
+DerivedData/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+!default.pbxuser
+!default.mode1v3
+!default.mode2v3
+!default.perspectivev3
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Podfile.lock
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-*.hprof
-*.hprof
+# Windows
+windows/flutter/ephemeral/
+windows/runner/GeneratedPluginRegistrant.*
+windows/CMakeUserPresets.json
+windows/*.user
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugins.cmake
