@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../theme/app_theme.dart';
-import '../../widgets/custom_widgets.dart';
+import '../../services/claim_service.dart';
 import '../../widgets/rating_dialog.dart';
 
 class DonationClaimsScreen extends StatelessWidget {
   final String donationId;
+  final ClaimService _claimService = ClaimService();
 
-  const DonationClaimsScreen({super.key, required this.donationId});
+  DonationClaimsScreen({super.key, required this.donationId});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF2E7D32),
         title: const Text('Pending Claims'),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -27,108 +26,65 @@ class DonationClaimsScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const EmptyStateView(
-              icon: Icons.checklist_rounded,
-              title: 'No Pending Claims',
-              description:
-                  'When community members request this item, their applications will appear here.',
-            );
+            return const Center(child: Text('No pending claims'));
           }
-
           final claims = snapshot.data!.docs;
-
           return ListView.builder(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(12),
             itemCount: claims.length,
             itemBuilder: (context, index) {
-              final claimId = claims[index].id;
               final claim = claims[index].data() as Map<String, dynamic>;
-              final needReason = claim['needReason'] ?? 'No reason provided';
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: PremiumCard(
-                  padding: const EdgeInsets.all(20),
+              final claimId = claims[index].id;
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const Text(
+                        'Need Reason:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(claim['needReason'] ?? 'No reason provided'),
+                      const SizedBox(height: 16),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
+                          ElevatedButton(
+                            onPressed: () async {
+                              try {
+                                await _claimService.approveClaim(claimId);
+                                if (context.mounted) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) =>
+                                        RatingDialog(claimId: claimId),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(e.toString())),
+                                  );
+                                }
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
                             ),
-                            child: const Icon(
-                              Icons.person_outline_rounded,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
+                            child: const Text('Approve'),
                           ),
-                          const SizedBox(width: 10),
-                          const Expanded(
-                            child: Text(
-                              'Recipient Request',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              await _claimService.rejectClaim(claimId);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
                             ),
-                          ),
-                          const StatusBadge(status: 'PENDING'),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        'Reason for Need:',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? AppColors.darkTextMuted
-                              : AppColors.lightTextMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        needReason,
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1.4,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : AppColors.lightTextPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Approve / Reject Action Buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => _rejectClaim(claimId),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.accentRose,
-                                side: const BorderSide(color: AppColors.accentRose),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              child: const Text('Decline'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: GradientButton(
-                              text: 'Approve',
-                              height: 48,
-                              onPressed: () => _approveClaim(claimId, context),
-                            ),
+                            child: const Text('Reject'),
                           ),
                         ],
                       ),
@@ -142,25 +98,5 @@ class DonationClaimsScreen extends StatelessWidget {
       ),
     );
   }
-
-  Future<void> _approveClaim(String claimId, BuildContext context) async {
-    await FirebaseFirestore.instance.collection('claims').doc(claimId).update({
-      'status': 'approved',
-      'approvedAt': Timestamp.now(),
-    });
-
-    if (context.mounted) {
-      showDialog(
-        context: context,
-        builder: (_) => RatingDialog(claimId: claimId),
-      );
-    }
-  }
-
-  Future<void> _rejectClaim(String claimId) async {
-    await FirebaseFirestore.instance.collection('claims').doc(claimId).update({
-      'status': 'rejected',
-      'rejectedAt': Timestamp.now(),
-    });
-  }
 }
+
