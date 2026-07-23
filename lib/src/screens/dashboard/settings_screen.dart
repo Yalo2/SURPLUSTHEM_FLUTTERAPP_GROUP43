@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/theme_controller.dart';
 import '../../widgets/custom_widgets.dart';
+import 'phone_verification_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -13,9 +15,7 @@ class SettingsScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings & Preferences'),
-      ),
+      appBar: AppBar(title: const Text('Settings & Preferences')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -24,7 +24,9 @@ class SettingsScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+              color: isDark
+                  ? AppColors.darkTextMuted
+                  : AppColors.lightTextMuted,
               letterSpacing: 0.5,
             ),
           ),
@@ -75,7 +77,9 @@ class SettingsScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+              color: isDark
+                  ? AppColors.darkTextMuted
+                  : AppColors.lightTextMuted,
               letterSpacing: 0.5,
             ),
           ),
@@ -106,6 +110,55 @@ class SettingsScreen extends StatelessWidget {
                     style: const TextStyle(fontSize: 12),
                   ),
                 ),
+                const Divider(height: 1, indent: 56),
+                StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user?.uid)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    final data =
+                        snapshot.data?.data() as Map<String, dynamic>? ?? {};
+                    final phone = data['phone'] ?? 'Not set';
+                    final isVerified = data['phoneVerified'] == true;
+
+                    return ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color:
+                              (isVerified ? AppColors.primary : Colors.orange)
+                                  .withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isVerified
+                              ? Icons.verified_rounded
+                              : Icons.warning_amber_rounded,
+                          color: isVerified ? AppColors.primary : Colors.orange,
+                          size: 20,
+                        ),
+                      ),
+                      title: const Text(
+                        'Phone Number',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        isVerified
+                            ? '$phone • Verified'
+                            : '$phone • Not verified',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PhoneVerificationScreen(),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -114,3 +167,4 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 }
+
