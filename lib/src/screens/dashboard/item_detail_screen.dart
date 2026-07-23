@@ -273,10 +273,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   const SizedBox(height: 24),
                   const Text(
                     'Item Description',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -300,14 +297,57 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => DonationClaimsScreen(
-                              donationId: widget.itemId,
-                            ),
+                            builder: (_) =>
+                                DonationClaimsScreen(donationId: widget.itemId),
                           ),
                         );
                       },
                     ),
                   ] else ...[
+                    StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(FirebaseAuth.instance.currentUser?.uid)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        final data =
+                            snapshot.data?.data() as Map<String, dynamic>? ??
+                            {};
+                        final isVerified = data['phoneVerified'] == true;
+                        if (isVerified) return const SizedBox.shrink();
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.orange.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.warning_amber_rounded,
+                                color: Colors.orange,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Your phone number isn\'t verified yet. Donors may be less likely to approve your request. Verify it in Settings.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.orange[800],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                     const Text(
                       'Request This Surplus Item',
                       style: TextStyle(
@@ -331,7 +371,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       controller: _needReasonController,
                       maxLines: 3,
                       decoration: const InputDecoration(
-                        hintText: 'e.g. For family meal prep / community shelter...',
+                        hintText:
+                            'e.g. For family meal prep / community shelter...',
                       ),
                     ),
                     const SizedBox(height: 20),
