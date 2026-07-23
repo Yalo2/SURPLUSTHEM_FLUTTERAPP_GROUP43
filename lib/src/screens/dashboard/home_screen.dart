@@ -20,7 +20,13 @@ class _HomeScreenState extends State<HomeScreen> {
   double? _userLat;
   double? _userLng;
 
-  final List<String> _categories = ['All', 'Food', 'Clothes', 'Household', 'Other'];
+  final List<String> _categories = [
+    'All',
+    'Food',
+    'Clothes',
+    'Household',
+    'Other',
+  ];
 
   @override
   void initState() {
@@ -121,7 +127,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         builder: (context, snapshot) {
                           if (!snapshot.hasData) return const SizedBox.shrink();
                           final data =
-                              snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                              snapshot.data!.data() as Map<String, dynamic>? ??
+                              {};
                           final claimsThisWeek =
                               (data['claimsThisWeek'] ?? 0) as int;
                           return ClaimQuotaBadge(claimsUsed: claimsThisWeek);
@@ -178,7 +185,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 54,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   itemCount: _categories.length,
                   itemBuilder: (context, index) {
                     final cat = _categories[index];
@@ -200,10 +210,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: isSelected
                               ? Colors.white
                               : (isDark
-                                  ? AppColors.darkTextPrimary
-                                  : AppColors.lightTextPrimary),
-                          fontWeight:
-                              isSelected ? FontWeight.w700 : FontWeight.w500,
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightTextPrimary),
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                         ),
                       ),
                     );
@@ -226,7 +237,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) => const Padding(
                           padding: EdgeInsets.only(bottom: 16),
-                          child: ShimmerLoader(width: double.infinity, height: 220),
+                          child: ShimmerLoader(
+                            width: double.infinity,
+                            height: 220,
+                          ),
                         ),
                         childCount: 3,
                       ),
@@ -251,9 +265,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   final title = (data['title'] ?? '').toString().toLowerCase();
                   final category = (data['category'] ?? 'Other').toString();
 
-                  final matchesQuery =
-                      title.contains(_searchQuery.toLowerCase());
-                  final matchesCat = _selectedCategory == 'All' ||
+                  final matchesQuery = title.contains(
+                    _searchQuery.toLowerCase(),
+                  );
+                  final matchesCat =
+                      _selectedCategory == 'All' ||
                       category.toLowerCase() == _selectedCategory.toLowerCase();
 
                   return matchesQuery && matchesCat;
@@ -272,10 +288,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (latB == null || lngB == null) return -1;
 
                     final distA = Geolocator.distanceBetween(
-                      _userLat!, _userLng!, latA, lngA,
+                      _userLat!,
+                      _userLng!,
+                      latA,
+                      lngA,
                     );
                     final distB = Geolocator.distanceBetween(
-                      _userLat!, _userLng!, latB, lngB,
+                      _userLat!,
+                      _userLng!,
+                      latB,
+                      lngB,
                     );
                     return distA.compareTo(distB);
                   });
@@ -296,37 +318,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 return SliverPadding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final data =
-                            filteredDocs[index].data() as Map<String, dynamic>;
-                        final donationId = filteredDocs[index].id;
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final data =
+                          filteredDocs[index].data() as Map<String, dynamic>;
+                      final donationId = filteredDocs[index].id;
 
-                        double? distanceKm;
-                        final lat = (data['latitude'] as num?)?.toDouble();
-                        final lng = (data['longitude'] as num?)?.toDouble();
-                        if (_userLat != null &&
-                            _userLng != null &&
-                            lat != null &&
-                            lng != null) {
-                          distanceKm = Geolocator.distanceBetween(
-                                _userLat!, _userLng!, lat, lng,
-                              ) /
-                              1000;
-                        }
+                      double? distanceKm;
+                      final lat = (data['latitude'] as num?)?.toDouble();
+                      final lng = (data['longitude'] as num?)?.toDouble();
+                      if (_userLat != null &&
+                          _userLng != null &&
+                          lat != null &&
+                          lng != null) {
+                        distanceKm =
+                            Geolocator.distanceBetween(
+                              _userLat!,
+                              _userLng!,
+                              lat,
+                              lng,
+                            ) /
+                            1000;
+                      }
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildDonationCard(
-                            context,
-                            donationId,
-                            data,
-                            distanceKm,
-                          ),
-                        );
-                      },
-                      childCount: filteredDocs.length,
-                    ),
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildDonationCard(
+                          context,
+                          donationId,
+                          data,
+                          distanceKm,
+                        ),
+                      );
+                    }, childCount: filteredDocs.length),
                   ),
                 );
               },
@@ -366,8 +389,9 @@ class _HomeScreenState extends State<HomeScreen> {
           Stack(
             children: [
               ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
                 child: Container(
                   height: 180,
                   width: double.infinity,
@@ -384,15 +408,21 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.grey,
                           ),
                         )
-                      : const Icon(Icons.image_outlined, size: 48, color: Colors.grey),
+                      : const Icon(
+                          Icons.image_outlined,
+                          size: 48,
+                          color: Colors.grey,
+                        ),
                 ),
               ),
               Positioned(
                 top: 12,
                 left: 12,
                 child: GlassContainer(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   borderRadius: BorderRadius.circular(12),
                   child: Text(
                     category,
