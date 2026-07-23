@@ -76,17 +76,15 @@ class AppTheme {
       ),
       iconTheme: IconThemeData(color: AppColors.lightTextPrimary),
     ),
-    cardTheme:
-        CardThemeData +
-        26(
-          color: AppColors.lightSurface,
-          elevation: 0,
-          margin: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: AppColors.lightBorder, width: 1),
-          ),
-        ),
+    cardTheme: CardThemeData(
+      color: AppColors.lightSurface,
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: AppColors.lightBorder, width: 1),
+      ),
+    ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
